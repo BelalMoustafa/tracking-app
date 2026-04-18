@@ -82,23 +82,30 @@
     </div>
 
     <script>
-        // رابط الشيت بتاعك
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxHFhklm_PPwQQgewsXyZ5U3Y72Utf5bRbb445UQNXCTZQ2wgSJH1Y9qcovBIBdOw55/exec";
         
         let ziadStatus = "";
         let faridaStatus = "";
         let existingDates = [];
 
-        // إعدادات التواريخ الثابتة
         const START_DATE_STR = "2026-04-17";
         const TOTAL_DAYS_LIMIT = 90;
+
+        // دالة جديدة مخصصة لضبط التاريخ بتوقيتك المحلي (بتمنع مشكلة اليوم اللي بيسقط)
+        function getLocalDateFormat(dateInput) {
+            let d = new Date(dateInput);
+            if (isNaN(d)) return ""; // تجاهل لو التاريخ بايظ
+            let year = d.getFullYear();
+            let month = String(d.getMonth() + 1).padStart(2, '0');
+            let day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
 
         window.onload = function() {
             if(localStorage.getItem('isLoggedIn') === 'true') {
                 showApp();
             }
 
-            // ضبط التواريخ المسموحة في حقل اختيار التاريخ
             const startDate = new Date(START_DATE_STR);
             const maxDate = new Date(startDate);
             maxDate.setDate(maxDate.getDate() + TOTAL_DAYS_LIMIT);
@@ -106,14 +113,13 @@
             const today = new Date();
             const dateInput = document.getElementById('targetDate');
             
-            // لو تاريخ النهاردة عدى الـ 90 يوم، هيختار آخر يوم كقيمة مبدئية
             let defaultDate = today <= maxDate ? today : maxDate;
-            // ولو النهاردة قبل البداية، هيختار يوم البداية
             if(today < startDate) defaultDate = startDate;
 
-            dateInput.value = defaultDate.toISOString().split('T')[0];
+            // استخدام الدالة الجديدة لضبط القيود
+            dateInput.value = getLocalDateFormat(defaultDate);
             dateInput.min = START_DATE_STR;
-            dateInput.max = maxDate.toISOString().split('T')[0];
+            dateInput.max = getLocalDateFormat(maxDate);
         };
 
         function login() {
@@ -155,10 +161,9 @@
                 const response = await fetch(SCRIPT_URL);
                 const data = await response.json();
                 
-                // تجميع التواريخ المسجلة بالفعل
+                // تجميع التواريخ المسجلة باستخدام الدالة المحلية الجديدة
                 existingDates = data.slice(1).map(row => {
-                    let d = new Date(row[0]);
-                    return d.toISOString().split('T')[0];
+                    return getLocalDateFormat(row[0]);
                 });
 
                 calculatePoints(data);
@@ -195,12 +200,12 @@
             let maxDate = new Date(startDate);
             maxDate.setDate(maxDate.getDate() + TOTAL_DAYS_LIMIT);
 
-            // هنشوف الأيام الناقصة لحد تاريخ النهاردة أو لحد نهاية الـ 90 يوم (أيهما أقرب)
             let loopEndDate = today < maxDate ? today : maxDate;
             let missing = [];
 
             for (let d = new Date(startDate); d <= loopEndDate; d.setDate(d.getDate() + 1)) {
-                let dateStr = d.toISOString().split('T')[0];
+                // الاعتماد على الدالة الجديدة لعد الأيام الناقصة
+                let dateStr = getLocalDateFormat(d);
                 if (!existingDates.includes(dateStr)) {
                     missing.push(dateStr);
                 }
@@ -210,7 +215,6 @@
                 listDiv.innerHTML = "<p class='text-green-600 text-center font-bold bg-green-50 p-2 rounded'>كل الأيام مسجلة حتى اليوم! ✅</p>";
             } else {
                 missing.reverse().forEach(date => {
-                    // تحويل شكل التاريخ ليكون أسهل في القراءة (اختياري)
                     let formattedDate = new Date(date).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
                     listDiv.innerHTML += `<div class="p-2 bg-red-50 text-red-700 rounded border border-red-100 text-center font-bold shadow-sm mb-2">${formattedDate}<br><span class="text-xs text-gray-500">${date}</span></div>`;
                 });
@@ -252,7 +256,6 @@
                 msg.className = "text-center text-sm font-bold text-green-600 mt-2";
                 
                 setTimeout(() => {
-                    // تصفير الاختيارات
                     ziadStatus = "";
                     faridaStatus = "";
                     document.querySelectorAll('button[id^="btn-"]').forEach(btn => {
@@ -260,7 +263,7 @@
                     });
                     
                     document.getElementById('saveBtn').innerText = "حفظ البيانات";
-                    fetchData(); // تحديث القائمة والنقاط
+                    fetchData(); 
                 }, 1500);
 
             } catch (error) {
