@@ -91,10 +91,9 @@
         const START_DATE_STR = "2026-04-17";
         const TOTAL_DAYS_LIMIT = 90;
 
-        // دالة جديدة مخصصة لضبط التاريخ بتوقيتك المحلي (بتمنع مشكلة اليوم اللي بيسقط)
         function getLocalDateFormat(dateInput) {
             let d = new Date(dateInput);
-            if (isNaN(d)) return ""; // تجاهل لو التاريخ بايظ
+            if (isNaN(d)) return "";
             let year = d.getFullYear();
             let month = String(d.getMonth() + 1).padStart(2, '0');
             let day = String(d.getDate()).padStart(2, '0');
@@ -116,7 +115,6 @@
             let defaultDate = today <= maxDate ? today : maxDate;
             if(today < startDate) defaultDate = startDate;
 
-            // استخدام الدالة الجديدة لضبط القيود
             dateInput.value = getLocalDateFormat(defaultDate);
             dateInput.min = START_DATE_STR;
             dateInput.max = getLocalDateFormat(maxDate);
@@ -161,7 +159,6 @@
                 const response = await fetch(SCRIPT_URL);
                 const data = await response.json();
                 
-                // تجميع التواريخ المسجلة باستخدام الدالة المحلية الجديدة
                 existingDates = data.slice(1).map(row => {
                     return getLocalDateFormat(row[0]);
                 });
@@ -204,7 +201,6 @@
             let missing = [];
 
             for (let d = new Date(startDate); d <= loopEndDate; d.setDate(d.getDate() + 1)) {
-                // الاعتماد على الدالة الجديدة لعد الأيام الناقصة
                 let dateStr = getLocalDateFormat(d);
                 if (!existingDates.includes(dateStr)) {
                     missing.push(dateStr);
@@ -223,10 +219,25 @@
 
         function calculatePoints(data) {
             let zPoints = 0, fPoints = 0;
-            for(let i=1; i<data.length; i++) {
-                if(data[i][1] === "Yes") zPoints += 5; else if(data[i][1] === "No") zPoints -= 5;
-                if(data[i][2] === "Yes") fPoints += 5; else if(data[i][2] === "No") fPoints -= 5;
+            
+            for(let i = 1; i < data.length; i++) {
+                // حساب نقاط زياد مع منع النزول تحت الصفر
+                if(data[i][1] === "Yes") {
+                    zPoints += 5;
+                } else if(data[i][1] === "No") {
+                    zPoints -= 5;
+                    if(zPoints < 0) zPoints = 0; // حماية ضد الرصيد السالب
+                }
+                
+                // حساب نقاط فريدة مع منع النزول تحت الصفر
+                if(data[i][2] === "Yes") {
+                    fPoints += 5;
+                } else if(data[i][2] === "No") {
+                    fPoints -= 5;
+                    if(fPoints < 0) fPoints = 0; // حماية ضد الرصيد السالب
+                }
             }
+            
             document.getElementById('ziadPoints').innerText = zPoints;
             document.getElementById('faridaPoints').innerText = fPoints;
         }
