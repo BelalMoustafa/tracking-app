@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام متابعة زياد وفريدة</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+        body { font-family: 'Cairo', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4">
+
+    <!-- Login Section -->
+    <div id="loginSection" class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg mt-20">
+        <h2 class="text-2xl font-bold mb-6 text-center text-blue-800">تسجيل دخول الأدمن</h2>
+        <input type="text" id="phone" placeholder="رقم الهاتف" class="w-full p-3 mb-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center">
+        <input type="password" id="pass" placeholder="كلمة المرور" class="w-full p-3 mb-6 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center">
+        <button onclick="login()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">دخول</button>
+    </div>
+
+    <!-- Main App Section -->
+    <div id="appSection" class="hidden max-w-2xl mx-auto">
+        <div class="bg-white p-6 rounded-xl shadow-lg mb-6">
+            <h1 class="text-2xl font-bold text-center mb-6 text-gray-800 border-b pb-4">لوحة تحكم (زياد & فريدة)</h1>
+            
+            <!-- Points Summary -->
+            <div class="grid grid-cols-2 gap-4 mb-8 text-center">
+                <div class="bg-blue-50 p-5 rounded-xl border border-blue-200">
+                    <h3 class="text-lg font-bold text-blue-800">زياد</h3>
+                    <p id="ziadPoints" class="text-4xl font-black text-blue-600 my-2">0</p>
+                    <p class="text-xs text-blue-400 font-bold uppercase">Lifetime Points</p>
+                </div>
+                <div class="bg-pink-50 p-5 rounded-xl border border-pink-200">
+                    <h3 class="text-lg font-bold text-pink-800">فريدة</h3>
+                    <p id="faridaPoints" class="text-4xl font-black text-pink-600 my-2">0</p>
+                    <p class="text-xs text-pink-400 font-bold uppercase">Lifetime Points</p>
+                </div>
+            </div>
+
+            <!-- Input Form -->
+            <div class="bg-gray-50 p-4 rounded-xl border">
+                <h4 class="font-bold mb-4 text-gray-700 underline">إضافة أو تعديل يوم:</h4>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm mb-1 text-gray-500">اختر التاريخ (من ١٧ أبريل وما بعده):</label>
+                        <input type="date" id="targetDate" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500">
+                    </div>
+                    
+                    <div class="flex justify-between items-center p-3 bg-white rounded-lg border">
+                        <span class="font-bold text-blue-700">زياد:</span>
+                        <div class="flex gap-2">
+                            <button onclick="setStatus('ziad', 'Yes')" id="btn-z-yes" class="px-5 py-2 bg-gray-200 rounded-lg font-bold transition">نعم (+5)</button>
+                            <button onclick="setStatus('ziad', 'No')" id="btn-z-no" class="px-5 py-2 bg-gray-200 rounded-lg font-bold transition">لا (-5)</button>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center p-3 bg-white rounded-lg border">
+                        <span class="font-bold text-pink-700">فريدة:</span>
+                        <div class="flex gap-2">
+                            <button onclick="setStatus('farida', 'Yes')" id="btn-f-yes" class="px-5 py-2 bg-gray-200 rounded-lg font-bold transition">نعم (+5)</button>
+                            <button onclick="setStatus('farida', 'No')" id="btn-f-no" class="px-5 py-2 bg-gray-200 rounded-lg font-bold transition">لا (-5)</button>
+                        </div>
+                    </div>
+
+                    <button onclick="saveData()" id="saveBtn" class="w-full bg-green-600 text-white p-4 rounded-xl font-bold text-lg hover:bg-green-700 shadow-md transition transform active:scale-95">
+                        حفظ في جوجل شيت
+                    </button>
+                    <p id="statusMsg" class="text-center text-sm font-bold"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // الرابط الخاص بك
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxHFhklm_PPwQQgewsXyZ5U3Y72Utf5bRbb445UQNXCTZQ2wgSJH1Y9qcovBIBdOw55/exec";
+        
+        let ziadStatus = "";
+        let faridaStatus = "";
+
+        function login() {
+            const phone = document.getElementById('phone').value;
+            const pass = document.getElementById('pass').value;
+            if(phone === "01154931351" && pass === "12345678") {
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('appSection').classList.remove('hidden');
+                fetchData();
+            } else {
+                alert("بيانات الدخول خطأ!");
+            }
+        }
+
+        function setStatus(person, status) {
+            if(person === 'ziad') {
+                ziadStatus = status;
+                document.getElementById('btn-z-yes').className = status === 'Yes' ? 'px-5 py-2 bg-green-500 text-white rounded-lg font-bold' : 'px-5 py-2 bg-gray-200 rounded-lg font-bold';
+                document.getElementById('btn-z-no').className = status === 'No' ? 'px-5 py-2 bg-red-500 text-white rounded-lg font-bold' : 'px-5 py-2 bg-gray-200 rounded-lg font-bold';
+            } else {
+                faridaStatus = status;
+                document.getElementById('btn-f-yes').className = status === 'Yes' ? 'px-5 py-2 bg-green-500 text-white rounded-lg font-bold' : 'px-5 py-2 bg-gray-200 rounded-lg font-bold';
+                document.getElementById('btn-f-no').className = status === 'No' ? 'px-5 py-2 bg-red-500 text-white rounded-lg font-bold' : 'px-5 py-2 bg-gray-200 rounded-lg font-bold';
+            }
+        }
+
+        async function fetchData() {
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const data = await response.json();
+                calculatePoints(data);
+            } catch (e) { console.log("Error fetching data"); }
+        }
+
+        function calculatePoints(data) {
+            let zPoints = 0;
+            let fPoints = 0;
+            // تخطي أول صف (Headers)
+            for(let i=1; i<data.length; i++) {
+                if(data[i][1] === "Yes") zPoints += 5;
+                else if(data[i][1] === "No") zPoints -= 5;
+                
+                if(data[i][2] === "Yes") fPoints += 5;
+                else if(data[i][2] === "No") fPoints -= 5;
+            }
+            document.getElementById('ziadPoints').innerText = zPoints;
+            document.getElementById('faridaPoints').innerText = fPoints;
+        }
+
+        async function saveData() {
+            const date = document.getElementById('targetDate').value;
+            const msg = document.getElementById('statusMsg');
+            
+            if(!date || !ziadStatus || !faridaStatus) {
+                alert("من فضلك اختر التاريخ والحالة للاثنين أولاً");
+                return;
+            }
+
+            document.getElementById('saveBtn').innerText = "جاري الحفظ والارسال...";
+            document.getElementById('saveBtn').disabled = true;
+            msg.innerText = "";
+
+            const payload = {
+                date: date,
+                ziad: ziadStatus,
+                farida: faridaStatus
+            };
+
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // لضمان العمل مع Google Script
+                    body: JSON.stringify(payload)
+                });
+
+                msg.className = "text-center text-sm font-bold text-green-600";
+                msg.innerText = "تم الحفظ بنجاح! انتظر ثواني للتحديث...";
+                
+                // إعادة تصفير الاختيارات
+                setTimeout(() => {
+                    fetchData(); // تحديث النقاط
+                    document.getElementById('saveBtn').innerText = "حفظ في جوجل شيت";
+                    document.getElementById('saveBtn').disabled = false;
+                }, 2000);
+
+            } catch (error) {
+                alert("حدث خطأ في الاتصال");
+                document.getElementById('saveBtn').disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
