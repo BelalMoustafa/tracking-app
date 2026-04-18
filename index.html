@@ -8,15 +8,15 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
         body { font-family: 'Cairo', sans-serif; }
-        .missing-days-list { max-height: 200px; overflow-y: auto; }
+        .missing-days-list { max-height: 250px; overflow-y: auto; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-4">
 
     <div id="loginSection" class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg mt-20">
         <h2 class="text-2xl font-bold mb-6 text-center text-blue-800">تسجيل دخول الأدمن</h2>
-        <input type="text" id="phone" placeholder="رقم الهاتف" class="w-full p-3 mb-4 border rounded-lg text-center">
-        <input type="password" id="pass" placeholder="كلمة المرور" class="w-full p-3 mb-6 border rounded-lg text-center">
+        <input type="text" id="phone" placeholder="رقم الهاتف" class="w-full p-3 mb-4 border rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <input type="password" id="pass" placeholder="كلمة المرور" class="w-full p-3 mb-6 border rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-500">
         <button onclick="login()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">دخول</button>
     </div>
 
@@ -43,25 +43,26 @@
                         <div>
                             <label class="block text-sm mb-1 text-gray-500">اختر التاريخ:</label>
                             <input type="date" id="targetDate" onchange="checkIfDateExists()" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500">
+                            <p class="text-xs text-gray-400 mt-1">النطاق المسموح: من 17 أبريل 2026 حتى 90 يوم بعدها.</p>
                         </div>
                         
                         <div class="flex justify-between items-center p-3 bg-white rounded-lg border">
                             <span class="font-bold text-blue-700">زياد:</span>
                             <div class="flex gap-2">
-                                <button onclick="setStatus('ziad', 'Yes')" id="btn-z-yes" class="px-5 py-2 bg-gray-200 rounded-lg font-bold">نعم</button>
-                                <button onclick="setStatus('ziad', 'No')" id="btn-z-no" class="px-5 py-2 bg-gray-200 rounded-lg font-bold">لا</button>
+                                <button onclick="setStatus('ziad', 'Yes')" id="btn-z-yes" class="px-5 py-2 bg-gray-200 rounded-lg font-bold transition">نعم</button>
+                                <button onclick="setStatus('ziad', 'No')" id="btn-z-no" class="px-5 py-2 bg-gray-200 rounded-lg font-bold transition">لا</button>
                             </div>
                         </div>
 
                         <div class="flex justify-between items-center p-3 bg-white rounded-lg border">
                             <span class="font-bold text-pink-700">فريدة:</span>
                             <div class="flex gap-2">
-                                <button onclick="setStatus('farida', 'Yes')" id="btn-f-yes" class="px-5 py-2 bg-gray-200 rounded-lg font-bold">نعم</button>
-                                <button onclick="setStatus('farida', 'No')" id="btn-f-no" class="px-5 py-2 bg-gray-200 rounded-lg font-bold">لا</button>
+                                <button onclick="setStatus('farida', 'Yes')" id="btn-f-yes" class="px-5 py-2 bg-gray-200 rounded-lg font-bold transition">نعم</button>
+                                <button onclick="setStatus('farida', 'No')" id="btn-f-no" class="px-5 py-2 bg-gray-200 rounded-lg font-bold transition">لا</button>
                             </div>
                         </div>
 
-                        <button onclick="saveData()" id="saveBtn" class="w-full bg-green-600 text-white p-4 rounded-xl font-bold text-lg hover:bg-green-700 transition disabled:bg-gray-400">
+                        <button onclick="saveData()" id="saveBtn" class="w-full bg-green-600 text-white p-4 rounded-xl font-bold text-lg hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed">
                             حفظ البيانات
                         </button>
                         <p id="statusMsg" class="text-center text-sm font-bold mt-2"></p>
@@ -75,33 +76,43 @@
             <div id="missingDays" class="missing-days-list space-y-2 text-sm">
                 <p class="text-gray-400 text-center">جاري التحقق...</p>
             </div>
-            <button onclick="logout()" class="w-full mt-6 text-xs text-red-500 hover:underline">تسجيل خروج</button>
+            <button onclick="logout()" class="w-full mt-6 text-xs text-red-500 hover:underline">تسجيل خروج من الحساب</button>
         </div>
 
     </div>
 
     <script>
+        // رابط الشيت بتاعك
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxHFhklm_PPwQQgewsXyZ5U3Y72Utf5bRbb445UQNXCTZQ2wgSJH1Y9qcovBIBdOw55/exec";
+        
         let ziadStatus = "";
         let faridaStatus = "";
         let existingDates = [];
 
+        // إعدادات التواريخ الثابتة
+        const START_DATE_STR = "2026-04-17";
+        const TOTAL_DAYS_LIMIT = 90;
+
         window.onload = function() {
-            // 1. التحقق من تسجيل الدخول المستمر
             if(localStorage.getItem('isLoggedIn') === 'true') {
                 showApp();
             }
 
-            // 2. ضبط التاريخ التلقائي والليميت
+            // ضبط التواريخ المسموحة في حقل اختيار التاريخ
+            const startDate = new Date(START_DATE_STR);
+            const maxDate = new Date(startDate);
+            maxDate.setDate(maxDate.getDate() + TOTAL_DAYS_LIMIT);
+
             const today = new Date();
-            const todayStr = today.toISOString().split('T')[0];
             const dateInput = document.getElementById('targetDate');
             
-            dateInput.value = todayStr;
-            dateInput.min = "2024-04-17"; // البداية المطلوبة
-            
-            const maxDate = new Date();
-            maxDate.setDate(maxDate.getDate() + 90);
+            // لو تاريخ النهاردة عدى الـ 90 يوم، هيختار آخر يوم كقيمة مبدئية
+            let defaultDate = today <= maxDate ? today : maxDate;
+            // ولو النهاردة قبل البداية، هيختار يوم البداية
+            if(today < startDate) defaultDate = startDate;
+
+            dateInput.value = defaultDate.toISOString().split('T')[0];
+            dateInput.min = START_DATE_STR;
             dateInput.max = maxDate.toISOString().split('T')[0];
         };
 
@@ -130,12 +141,12 @@
         function setStatus(person, status) {
             if(person === 'ziad') {
                 ziadStatus = status;
-                document.getElementById('btn-z-yes').className = status === 'Yes' ? 'px-5 py-2 bg-green-500 text-white rounded-lg font-bold' : 'px-5 py-2 bg-gray-200 rounded-lg font-bold';
-                document.getElementById('btn-z-no').className = status === 'No' ? 'px-5 py-2 bg-red-500 text-white rounded-lg font-bold' : 'px-5 py-2 bg-gray-200 rounded-lg font-bold';
+                document.getElementById('btn-z-yes').className = status === 'Yes' ? 'px-5 py-2 bg-green-500 text-white rounded-lg font-bold transition' : 'px-5 py-2 bg-gray-200 rounded-lg font-bold transition';
+                document.getElementById('btn-z-no').className = status === 'No' ? 'px-5 py-2 bg-red-500 text-white rounded-lg font-bold transition' : 'px-5 py-2 bg-gray-200 rounded-lg font-bold transition';
             } else {
                 faridaStatus = status;
-                document.getElementById('btn-f-yes').className = status === 'Yes' ? 'px-5 py-2 bg-green-500 text-white rounded-lg font-bold' : 'px-5 py-2 bg-gray-200 rounded-lg font-bold';
-                document.getElementById('btn-f-no').className = status === 'No' ? 'px-5 py-2 bg-red-500 text-white rounded-lg font-bold' : 'px-5 py-2 bg-gray-200 rounded-lg font-bold';
+                document.getElementById('btn-f-yes').className = status === 'Yes' ? 'px-5 py-2 bg-green-500 text-white rounded-lg font-bold transition' : 'px-5 py-2 bg-gray-200 rounded-lg font-bold transition';
+                document.getElementById('btn-f-no').className = status === 'No' ? 'px-5 py-2 bg-red-500 text-white rounded-lg font-bold transition' : 'px-5 py-2 bg-gray-200 rounded-lg font-bold transition';
             }
         }
 
@@ -144,7 +155,7 @@
                 const response = await fetch(SCRIPT_URL);
                 const data = await response.json();
                 
-                // حفظ التواريخ الموجودة للمقارنة
+                // تجميع التواريخ المسجلة بالفعل
                 existingDates = data.slice(1).map(row => {
                     let d = new Date(row[0]);
                     return d.toISOString().split('T')[0];
@@ -153,7 +164,10 @@
                 calculatePoints(data);
                 checkIfDateExists();
                 updateMissingDays();
-            } catch (e) { console.log("Error fetching data"); }
+            } catch (e) { 
+                console.log("Error fetching data"); 
+                document.getElementById('missingDays').innerHTML = "<p class='text-red-500 text-center'>خطأ في جلب البيانات</p>";
+            }
         }
 
         function checkIfDateExists() {
@@ -164,7 +178,7 @@
             if(existingDates.includes(selectedDate)) {
                 saveBtn.disabled = true;
                 msg.innerText = "⚠️ هذا اليوم مسجل بالفعل في قاعدة البيانات";
-                msg.className = "text-center text-sm font-bold text-orange-600";
+                msg.className = "text-center text-sm font-bold text-orange-600 mt-2";
             } else {
                 saveBtn.disabled = false;
                 msg.innerText = "";
@@ -175,12 +189,17 @@
             const listDiv = document.getElementById('missingDays');
             listDiv.innerHTML = "";
             
-            let startDate = new Date("2024-04-17");
+            let startDate = new Date(START_DATE_STR);
             let today = new Date();
+            
+            let maxDate = new Date(startDate);
+            maxDate.setDate(maxDate.getDate() + TOTAL_DAYS_LIMIT);
+
+            // هنشوف الأيام الناقصة لحد تاريخ النهاردة أو لحد نهاية الـ 90 يوم (أيهما أقرب)
+            let loopEndDate = today < maxDate ? today : maxDate;
             let missing = [];
 
-            // فحص آخر 90 يوم من تاريخ البداية حتى اليوم
-            for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
+            for (let d = new Date(startDate); d <= loopEndDate; d.setDate(d.getDate() + 1)) {
                 let dateStr = d.toISOString().split('T')[0];
                 if (!existingDates.includes(dateStr)) {
                     missing.push(dateStr);
@@ -188,10 +207,12 @@
             }
 
             if(missing.length === 0) {
-                listDiv.innerHTML = "<p class='text-green-500 text-center italic'>كل الأيام مسجلة! ✅</p>";
+                listDiv.innerHTML = "<p class='text-green-600 text-center font-bold bg-green-50 p-2 rounded'>كل الأيام مسجلة حتى اليوم! ✅</p>";
             } else {
                 missing.reverse().forEach(date => {
-                    listDiv.innerHTML += `<div class="p-2 bg-red-50 text-red-700 rounded border border-red-100 text-center font-bold">${date}</div>`;
+                    // تحويل شكل التاريخ ليكون أسهل في القراءة (اختياري)
+                    let formattedDate = new Date(date).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
+                    listDiv.innerHTML += `<div class="p-2 bg-red-50 text-red-700 rounded border border-red-100 text-center font-bold shadow-sm mb-2">${formattedDate}<br><span class="text-xs text-gray-500">${date}</span></div>`;
                 });
             }
         }
@@ -228,23 +249,24 @@
                 });
 
                 msg.innerText = "تم الحفظ بنجاح! جاري التحديث...";
-                msg.className = "text-center text-sm font-bold text-green-600";
+                msg.className = "text-center text-sm font-bold text-green-600 mt-2";
                 
                 setTimeout(() => {
-                    // ريست للاختيارات (تصفير الأزرار)
+                    // تصفير الاختيارات
                     ziadStatus = "";
                     faridaStatus = "";
                     document.querySelectorAll('button[id^="btn-"]').forEach(btn => {
-                        btn.className = 'px-5 py-2 bg-gray-200 rounded-lg font-bold';
+                        btn.className = 'px-5 py-2 bg-gray-200 rounded-lg font-bold transition';
                     });
                     
                     document.getElementById('saveBtn').innerText = "حفظ البيانات";
-                    fetchData(); // تحديث الأيام الناقصة والنقاط
+                    fetchData(); // تحديث القائمة والنقاط
                 }, 1500);
 
             } catch (error) {
-                alert("حدث خطأ");
+                alert("حدث خطأ في الاتصال");
                 document.getElementById('saveBtn').disabled = false;
+                document.getElementById('saveBtn').innerText = "حفظ البيانات";
             }
         }
     </script>
